@@ -2145,7 +2145,9 @@ static int dash_write_packet(AVFormatContext *s, AVPacket *pkt)
         os->coding_dependency |= os->parser->pict_type != AV_PICTURE_TYPE_I;
     }
 
-    if (pkt->flags & AV_PKT_FLAG_KEY && os->packets_written &&
+    if (((st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && pkt->flags & AV_PKT_FLAG_RAI) ||
+		(st->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && pkt->flags & AV_PKT_FLAG_KEY)) &&
+		os->packets_written &&
         av_compare_ts(elapsed_duration, st->time_base,
                       seg_end_duration, AV_TIME_BASE_Q) >= 0) {
         if (!c->has_video || st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {

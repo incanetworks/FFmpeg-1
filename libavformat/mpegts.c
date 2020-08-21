@@ -99,6 +99,7 @@ struct MpegTSFilter {
     int last_cc; /* last cc code (-1 if first packet) */
     int64_t last_pcr;
     int discard;
+    int is_rai_set;
     enum MpegTSFilterType type;
     union {
         MpegTSPESFilter pes_filter;
@@ -2731,7 +2732,9 @@ static int handle_packet(MpegTSContext *ts, const uint8_t *packet, int64_t pos)
     is_discontinuity = has_adaptation &&
                        packet[4] != 0 && /* with length > 0 */
                        (packet[5] & 0x80); /* and discontinuity indicated */
-
+    tss->is_rai_set = has_adaptation &&
+			packet[4] != 0 && /* with length > 0 */
+			(packet[5] & 0x40); /* and rai indicated */
     /* continuity check (currently not used) */
     cc = (packet[3] & 0xf);
     expected_cc = has_payload ? (tss->last_cc + 1) & 0x0f : tss->last_cc;
@@ -3222,7 +3225,14 @@ static int mpegts_read_packet(AVFormatContext *s, AVPacket *pkt)
                 }
             }
     }
-
+    for (i = 0; i < NB_PID_MAX; i++) {
+        if (ts->pids[i] && ts->pids[i]->type == MPEGTS_PES) {
+            if (ts->pids[i]->is_rai_set) {
+                pkt->flags |= AV_PKT_FLAG_RAI;
+            }
+            break;
+        }
+    }
     if (!ret && pkt->size < 0)
         ret = AVERROR_INVALIDDATA;
     return ret;
