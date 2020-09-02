@@ -120,6 +120,7 @@ struct representation {
     uint32_t init_sec_buf_read_offset;
     int64_t cur_timestamp;
     int is_restart_needed;
+    int update_pkt_flags;
 };
 
 typedef struct DASHContext {
@@ -1679,6 +1680,8 @@ static struct fragment *get_current_fragment(struct representation *pls)
                 return NULL;
             }
         }
+        if (pls->type == AVMEDIA_TYPE_VIDEO)
+	    pls->update_pkt_flags = 1;
         av_free(tmpfilename);
         seg->size = -1;
     }
@@ -2268,6 +2271,10 @@ static int dash_read_packet(AVFormatContext *s, AVPacket *pkt)
             /* If we got a packet, return it */
             cur->cur_timestamp = av_rescale(pkt->pts, (int64_t)cur->ctx->streams[0]->time_base.num * 90000, cur->ctx->streams[0]->time_base.den);
             pkt->stream_index = cur->stream_index;
+	    if (cur->update_pkt_flags == 1) {
+		pkt->flags |= AV_PKT_FLAG_RAI;
+		cur->update_pkt_flags = 0;
+	    }
             return 0;
         }
         if (cur->is_restart_needed) {
