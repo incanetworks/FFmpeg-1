@@ -199,6 +199,7 @@ typedef struct DASHContext {
     AVRational min_playback_rate;
     AVRational max_playback_rate;
     int64_t update_period;
+    int64_t update_system_time;
 } DASHContext;
 
 static struct codec_string {
@@ -2095,7 +2096,9 @@ static int dash_write_packet(AVFormatContext *s, AVPacket *pkt)
     os->last_pts = pkt->pts;
 
     if (!c->availability_start_time[0]) {
-        int64_t start_time_us = av_gettime();
+	int64_t start_time_us = av_gettime();
+	if (c->update_system_time)
+	     start_time_us = c->update_system_time;
         c->start_time_s = start_time_us / 1000000;
         format_date(c->availability_start_time,
                     sizeof(c->availability_start_time), start_time_us);
@@ -2386,6 +2389,7 @@ static const AVOption options[] = {
     { "min_playback_rate", "Set desired minimum playback rate", OFFSET(min_playback_rate), AV_OPT_TYPE_RATIONAL, { .dbl = 1.0 }, 0.5, 1.5, E },
     { "max_playback_rate", "Set desired maximum playback rate", OFFSET(max_playback_rate), AV_OPT_TYPE_RATIONAL, { .dbl = 1.0 }, 0.5, 1.5, E },
     { "update_period", "Set the mpd update interval", OFFSET(update_period), AV_OPT_TYPE_INT64, {.i64 = 0}, 0, INT64_MAX, E},
+    { "update_system_time", "Set the system time used for calculating availability start time", OFFSET(update_system_time), AV_OPT_TYPE_INT64, {.i64 = 0}, 0, INT64_MAX, E},
     { NULL },
 };
 
