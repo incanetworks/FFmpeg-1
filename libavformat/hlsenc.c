@@ -256,6 +256,7 @@ typedef struct HLSContext {
     char *headers;
     int has_default_key; /* has DEFAULT field of var_stream_map */
     int has_video_m3u8; /* has video stream m3u8 list */
+	int enable_rai;
 } HLSContext;
 
 static int hlsenc_io_open(AVFormatContext *s, AVIOContext **pb, char *filename,
@@ -2376,7 +2377,8 @@ static int hls_write_packet(AVFormatContext *s, AVPacket *pkt)
 
     if (vs->has_video) {
         can_split = st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO &&
-                    ((pkt->flags & AV_PKT_FLAG_RAI) || (hls->flags & HLS_SPLIT_BY_TIME));
+                    (((hls->enable_rai == 1) && ((pkt->flags & AV_PKT_FLAG_RAI) || (hls->flags & HLS_SPLIT_BY_TIME))) ||
+					(hls->enable_rai == 0) && ((pkt->flags & AV_PKT_FLAG_KEY) || (hls->flags & HLS_SPLIT_BY_TIME)));
         is_ref_pkt = (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) && (pkt->stream_index == vs->reference_stream_index);
     }
     if (pkt->pts == AV_NOPTS_VALUE)
@@ -3066,6 +3068,7 @@ static const AVOption options[] = {
     {"timeout", "set timeout for socket I/O operations", OFFSET(timeout), AV_OPT_TYPE_DURATION, { .i64 = -1 }, -1, INT_MAX, .flags = E },
     {"ignore_io_errors", "Ignore IO errors for stable long-duration runs with network output", OFFSET(ignore_io_errors), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, E },
     {"headers", "set custom HTTP headers, can override built in default headers", OFFSET(headers), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, E },
+    {"enable_rai", "enable/disable RAI based on packaging", OFFSET(enable_rai), AV_OPT_TYPE_BOOL, {.i64 = 0 }, 0, 1, E },
     { NULL },
 };
 
