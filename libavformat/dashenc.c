@@ -2149,11 +2149,11 @@ static int dash_write_packet(AVFormatContext *s, AVPacket *pkt)
         os->coding_dependency |= os->parser->pict_type != AV_PICTURE_TYPE_I;
     }
 
-    if ((c->enable_rai == 1 && st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && pkt->flags & AV_PKT_FLAG_RAI) ||
-		((c->enable_rai == 0 && st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && pkt->flags & AV_PKT_FLAG_KEY) ||
-		(st->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && pkt->flags & AV_PKT_FLAG_KEY) &&
+    if (((c->enable_rai == 1 && st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && pkt->flags & AV_PKT_FLAG_RAI) ||
+		(c->enable_rai == 0 && st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && pkt->flags & AV_PKT_FLAG_KEY) ||
+		(st->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && pkt->flags & AV_PKT_FLAG_KEY)) &&
 			av_compare_ts(elapsed_duration, st->time_base,
-			seg_end_duration, AV_TIME_BASE_Q) >= 0) && os->packets_written) {
+				seg_end_duration, AV_TIME_BASE_Q) >= 0 && os->packets_written) {
         if (!c->has_video || st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             c->last_duration = av_rescale_q(pkt->pts - os->start_pts,
                     st->time_base,
