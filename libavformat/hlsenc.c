@@ -2377,7 +2377,7 @@ static int hls_write_packet(AVFormatContext *s, AVPacket *pkt)
 
     if (vs->has_video) {
         can_split = st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO &&
-                    (((hls->enable_rai == 1) && ((pkt->flags & AV_PKT_FLAG_RAI) || (hls->flags & HLS_SPLIT_BY_TIME))) ||
+                    (((hls->enable_rai == 1) && (pkt->flags & AV_PKT_FLAG_RAI)) ||
 					(hls->enable_rai == 0) && ((pkt->flags & AV_PKT_FLAG_KEY) || (hls->flags & HLS_SPLIT_BY_TIME)));
         is_ref_pkt = (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) && (pkt->stream_index == vs->reference_stream_index);
     }
