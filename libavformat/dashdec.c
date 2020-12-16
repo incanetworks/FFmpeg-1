@@ -121,6 +121,7 @@ struct representation {
     int64_t cur_timestamp;
     int is_restart_needed;
     int update_pkt_flags;
+	int retry_count;
 };
 
 typedef struct DASHContext {
@@ -1822,6 +1823,12 @@ restart:
             }
             av_log(v->parent, AV_LOG_WARNING, "Failed to open fragment of playlist %d\n", v->rep_idx);
             v->cur_seq_no++;
+            v->retry_count++;
+			if (v->retry_count > 10) {
+				ret = AVERROR_EXIT;
+				goto end;
+			}
+			av_usleep(1000000);
             goto restart;
         }
     }
@@ -2265,6 +2272,7 @@ static int dash_read_packet(AVFormatContext *s, AVPacket *pkt)
     if (!cur) {
         return AVERROR_INVALIDDATA;
     }
+	cur->retry_count = 0;
     while (!ff_check_interrupt(c->interrupt_callback) && !ret) {
         ret = av_read_frame(cur->ctx, pkt);
         if (ret >= 0) {
